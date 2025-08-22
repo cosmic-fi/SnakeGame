@@ -1,7 +1,7 @@
 ![Snake Game Screenshot](https://i.ibb.co/vCRv3Dxx/Capture.png)
 
 
-### [ <a ref="https://snakegame.cosmicfi.online/" style="background-color: #646cff;color:aliceblue;cursor:pointer;padding: 10px;border-radius: 10px">[ Play Now ]</a> ]
+### [<a href="https://snakegame.cosmicfi.online/" style="background-color: #646cff;color:aliceblue;cursor:pointer;padding: 10px;border-radius: 10px">[ Play Now ]</a> ]
 
 ## Live Demo
 
