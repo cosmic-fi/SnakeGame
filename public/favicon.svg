@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="64" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Snake body -->
+  <rect x="80" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="120" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="160" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="200" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="240" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="280" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="320" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="320" y="256" width="40" height="40" rx="6" fill="#4ade80"/>
+  <rect x="320" y="296" width="40" height="40" rx="6" fill="#4ade80"/>
+  
+  <!-- Snake head -->
+  <rect x="360" y="296" width="40" height="40" rx="6" fill="#22c55e"/>
+  
+  <!-- Eyes -->
+  <circle cx="370" cy="306" r="4" fill="#1f2937"/>
+  <circle cx="390" cy="306" r="4" fill="#1f2937"/>
+  
+  <!-- Food -->
+  <circle cx="180" cy="140" r="16" fill="#ef4444"/>
+</svg>
