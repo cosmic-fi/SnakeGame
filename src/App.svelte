@@ -4,7 +4,8 @@
 </script>
 
 <svelte:head>
-	<title>Snake Game - Svelte Edition</title>
+	<title>Snake Game</title>
+	<link rel="icon" href="./favicon.png"/>
 	<meta name="description" content="Classic Snake game built with Svelte" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </svelte:head>

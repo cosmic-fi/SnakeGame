@@ -1,4 +1,9 @@
 ![Snake Game Screenshot](https://i.ibb.co/vCRv3Dxx/Capture.png)
+<a href="https://snakegame-cosmicxo.vercel.app/">Play Now</a>
+
+## Live Demo
+
+Check out the live demo of the Snake Game: [Snake Game Demo](https://snakegame-cosmicxo.vercel.app/)
 
 # Snake Game 🐍
 
