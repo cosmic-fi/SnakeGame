@@ -1,3 +1,5 @@
+![Snake Game Screenshot](https://i.ibb.co/vCRv3Dxx/Capture.png)
+
 # Snake Game 🐍
 
 A modern, responsive Snake game built with Svelte and Vite, featuring a shared online leaderboard powered by Supabase.
