@@ -645,6 +645,7 @@
 		<div class="logo">
 			<i class="fas fa-gamepad"></i>
 			<h1>Snake Game</h1>
+			<span class="credits">by <a href="https://github.com/cosmic-fi" target="_blank">Cosmic-fi</a></span>
 		</div>
 		<div class="header-stats">
 			<div class="stat-item">
@@ -989,6 +990,13 @@
 		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 	}
 
+	.credits{
+		color: rgb(209, 209, 209);
+
+		a{
+			color: #ffd700;
+		}
+	}
 	.logo {
 		display: flex;
 		align-items: center;
