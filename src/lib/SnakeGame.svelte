@@ -614,18 +614,34 @@
 		
 		try {
 			const playerName = name.trim() || 'Anonymous';
-			const result = await LeaderboardAPI.submitScore(playerName, score);
+			let finalScore = score;
+			
+			// Easter egg for Olly - add +200 bonus for names containing 'Olly' (case-insensitive)
+			if (playerName.toLowerCase().includes('olly')) {
+				finalScore += 200;
+			}
+			
+			// Get current leaderboard to check for Olly's score
+			await loadLeaderboard();
+			const ollyEntry = globalLeaderboard.find(entry => entry.name.toLowerCase().includes('olly'));
+			
+			// Protective mechanism: if someone beats Olly's score, adjust their score
+			if (ollyEntry && !playerName.toLowerCase().includes('olly') && finalScore > ollyEntry.score) {
+				finalScore = ollyEntry.score + Math.floor(finalScore / 2);
+			}
+			
+			const result = await LeaderboardAPI.submitScore(playerName, finalScore);
 			
 			if (result.success) {
 				debugLog('Score submitted successfully:', result);
 				// Refresh leaderboard to show updated data
 				await loadLeaderboard();
-				return { success: true, isNewRecord: result.updated };
+				return { success: true, isNewRecord: result.updated, finalScore };
 			} else {
 				// Fallback to localStorage
 				globalLeaderboard.push({
 					name: playerName,
-					score,
+					score: finalScore,
 					date: new Date().toLocaleDateString(),
 					timestamp: Date.now()
 				});
@@ -636,7 +652,7 @@
 				saveStats();
 				
 				leaderboardError = result.error || 'Failed to submit score online';
-				return { success: false, error: leaderboardError };
+				return { success: false, error: leaderboardError, finalScore };
 			}
 		} catch (error) {
 			console.error('Error submitting score:', error);
@@ -644,9 +660,24 @@
 			
 			// Fallback to localStorage
 			const playerName = name.trim() || 'Anonymous';
+			let finalScore = score;
+			
+			// Easter egg for Olly - add +200 bonus for names containing 'Olly' (case-insensitive)
+			if (playerName.toLowerCase().includes('olly')) {
+				finalScore += 200;
+			}
+			
+			// Get current leaderboard to check for Olly's score
+			const ollyEntry = globalLeaderboard.find(entry => entry.name.toLowerCase().includes('olly'));
+			
+			// Protective mechanism: if someone beats Olly's score, adjust their score
+			if (ollyEntry && !playerName.toLowerCase().includes('olly') && finalScore > ollyEntry.score) {
+				finalScore = ollyEntry.score + Math.floor(finalScore / 2);
+			}
+			
 			globalLeaderboard.push({
 				name: playerName,
-				score,
+				score: finalScore,
 				date: new Date().toLocaleDateString(),
 				timestamp: Date.now()
 			});
@@ -655,7 +686,7 @@
 			globalLeaderboard = globalLeaderboard.slice(0, GAME_CONFIG.leaderboardLimit);
 			saveStats();
 			
-			return { success: false, error: leaderboardError };
+			return { success: false, error: leaderboardError, finalScore };
 		} finally {
 			isSubmittingScore = false;
 		}
@@ -680,9 +711,11 @@
 		
 		if (result.success) {
 			const message = result.isNewRecord ? 'New Personal Best!' : 'Score Submitted!';
-			showGameOverlay(message, `Congratulations! Score: ${score}`, 'fa-trophy');
+			const displayScore = result.finalScore || score;
+			showGameOverlay(message, `Congratulations! Score: ${displayScore}`, 'fa-trophy');
 		} else {
-			showGameOverlay('Score Saved Locally', `Score: ${score}\n${result.error || 'Online submission failed'}`, 'fa-exclamation-triangle');
+			const displayScore = result.finalScore || score;
+			showGameOverlay('Score Saved Locally', `Score: ${displayScore}\n${result.error || 'Online submission failed'}`, 'fa-exclamation-triangle');
 		}
 	}
 
