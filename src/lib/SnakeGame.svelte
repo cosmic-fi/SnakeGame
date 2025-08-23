@@ -112,6 +112,29 @@
 		playSound(400, 0.05, 'sine');
 	}
 
+	// Load player name from localStorage
+	function loadPlayerName() {
+		try {
+			const savedName = localStorage.getItem('snakeGamePlayerName');
+			if (savedName) {
+				playerName = savedName;
+			}
+		} catch (e) {
+			console.error('Error loading player name:', e);
+		}
+	}
+
+	// Save player name to localStorage
+	function savePlayerName() {
+		try {
+			if (playerName && playerName.trim()) {
+				localStorage.setItem('snakeGamePlayerName', playerName.trim());
+			}
+		} catch (e) {
+			console.error('Error saving player name:', e);
+		}
+	}
+
 	// Load stats from localStorage and leaderboard from Supabase
 	function loadStats() {
 		try {
@@ -125,7 +148,8 @@
 				totalFood = stats.totalFood || 0;
 				recentGames = stats.recentGames || [];
 			}
-			// Load leaderboard from Supabase
+			// Load player name and leaderboard from Supabase
+			loadPlayerName();
 			loadLeaderboard();
 		} catch (e) {
 			console.error('Error loading stats:', e);
@@ -705,9 +729,11 @@
 			return;
 		}
 		
+		// Save player name for future use
+		savePlayerName();
+		
 		const result = await addToLeaderboard(playerName, score);
 		showNameInput = false;
-		playerName = '';
 		
 		if (result.success) {
 			const message = result.isNewRecord ? 'New Personal Best!' : 'Score Submitted!';
@@ -722,7 +748,6 @@
 	// Cancel name input
 	function cancelNameInput() {
 		showNameInput = false;
-		playerName = '';
 		showGameOverlay('Game Over!', `Final Score: ${score}`, 'fa-skull-crossbones');
 	}
 
@@ -1165,6 +1190,7 @@
 						class="name-input"
 						disabled={isSubmittingScore}
 						on:keydown={(e) => e.key === 'Enter' && !isSubmittingScore && submitName()}
+						on:input={savePlayerName}
 					/>
 				</div>
 				<div class="modal-footer">
@@ -1347,6 +1373,8 @@
 		padding-left: 1em;
 		height: calc(100vh - 80px);
 		flex-wrap: 1;
+		max-width: 1300px;
+		margin: auto;
 	}
 
 	.scoreboard {
@@ -1607,7 +1635,7 @@
 	}
 
 	.btn {
-		padding: 0.8rem 1.5rem;
+		padding: 0.5rem 1.5rem;
 		border: none;
 		width: 80%;
 		border-radius: 8px;
