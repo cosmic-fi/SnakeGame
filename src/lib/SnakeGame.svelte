@@ -1073,14 +1073,16 @@
 				></canvas>
 				
 				{#if showOverlay}
-				<div class="game-overlay">
-					<div class="overlay-content">
-						<i class="fas {overlayIcon} overlay-icon"></i>
-						<h2 class="overlay-title">{overlayTitle}</h2>
-						<p class="overlay-message">{overlayMessage}</p>
-					</div>
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div class="game-overlay" on:click={handleCanvasClick}>
+				<div class="overlay-content">
+					<i class="fas {overlayIcon} overlay-icon"></i>
+					<h2 class="overlay-title">{overlayTitle}</h2>
+					<p class="overlay-message">{overlayMessage}</p>
 				</div>
-			{/if}
+			</div>
+		{/if}
 
 			<!-- Fullscreen HUD -->
 			{#if isFullscreen}
