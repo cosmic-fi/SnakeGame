@@ -1,7 +1,10 @@
 <script>
+// @ts-nocheck
+
 	import { onMount, onDestroy } from 'svelte';
 	import { LeaderboardAPI, validatePlayerName } from './supabase.js';
 	import { GAME_CONFIG, debugLog } from './config.js';
+	import packageJson from '../../package.json';
 
 	// Game state variables
 	let canvas;
@@ -13,13 +16,16 @@
 
 	// Game configuration
 	const gridSize = 20;
-	const tileCount = 20;
+	const tileCount = 25;
 
 	// Game objects
-	let snake = [{ x: 10, y: 10 }];
-	let food = { x: 15, y: 15 };
+	let snake = [{ x: 12, y: 12 }];
+	let food = { x: 18, y: 18 };
+	let powerUp = null;
 	let dx = 1;
 	let dy = 0;
+	let nextDirection = { dx: 1, dy: 0 }; // Input buffer for smooth direction changes
+	let gameMode = 'border'; // 'border' or 'wrap'
 
 	// Game statistics
 	let score = 0;
@@ -48,6 +54,63 @@
 	let isSubmittingScore = false;
 	let gameContainer;
 	let isFullscreen = false;
+
+	// Sound effects
+	let audioContext;
+	let soundEnabled = true;
+
+	// Initialize audio context
+	function initAudio() {
+		if (!audioContext) {
+			try {
+				audioContext = new (window.AudioContext || window.webkitAudioContext)();
+			} catch (e) {
+				console.warn('Audio not supported:', e);
+				soundEnabled = false;
+			}
+		}
+	}
+
+	// Play sound effect
+	function playSound(frequency, duration, type = 'sine') {
+		if (!soundEnabled || !audioContext) return;
+		
+		try {
+			const oscillator = audioContext.createOscillator();
+			const gainNode = audioContext.createGain();
+			
+			oscillator.connect(gainNode);
+			gainNode.connect(audioContext.destination);
+			
+			oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+			oscillator.type = type;
+			
+			gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+			gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+			
+			oscillator.start(audioContext.currentTime);
+			oscillator.stop(audioContext.currentTime + duration);
+		} catch (e) {
+			console.warn('Sound playback failed:', e);
+		}
+	}
+
+	// Sound effects
+	function playEatSound() {
+		playSound(800, 0.1, 'square');
+	}
+
+	function playPowerUpSound() {
+		playSound(1200, 0.2, 'sawtooth');
+	}
+
+	function playGameOverSound() {
+		playSound(200, 0.5, 'triangle');
+	}
+
+	function playMoveSound() {
+		playSound(400, 0.05, 'sine');
+	}
 
 	// Load stats from localStorage and leaderboard from Supabase
 	function loadStats() {
@@ -169,20 +232,54 @@
 			};
 			attempts++;
 		} while (attempts < maxAttempts && 
-				 snake.some(segment => segment.x === foodPosition.x && segment.y === foodPosition.y));
+				 (snake.some(segment => segment.x === foodPosition.x && segment.y === foodPosition.y) ||
+				  (powerUp && powerUp.x === foodPosition.x && powerUp.y === foodPosition.y)));
 
 		food = foodPosition;
+	}
+
+	// Generate power-up at random position (10% chance per food eaten)
+	function generatePowerUp() {
+		if (powerUp || Math.random() > 0.1) return;
+		
+		let powerUpPosition;
+		let attempts = 0;
+		const maxAttempts = 100;
+
+		do {
+			powerUpPosition = {
+				x: Math.floor(Math.random() * tileCount),
+				y: Math.floor(Math.random() * tileCount),
+				type: Math.random() > 0.5 ? 'big' : 'bonus' // big food or bonus points
+			};
+			attempts++;
+		} while (attempts < maxAttempts && 
+				 (snake.some(segment => segment.x === powerUpPosition.x && segment.y === powerUpPosition.y) ||
+				  (food.x === powerUpPosition.x && food.y === powerUpPosition.y)));
+
+		powerUp = powerUpPosition;
+		
+		// Remove power-up after 10 seconds
+		setTimeout(() => {
+			if (powerUp === powerUpPosition) {
+				powerUp = null;
+			}
+		}, 10000);
 	}
 
 	// Start game
 	function startGame() {
 		if (gameRunning) return;
 
+		// Initialize audio on first user interaction
+		initAudio();
+
 		// Reset game state
 		snake = [{ x: 10, y: 10 }];
 		score = 0;
 		gameTime = 0;
 		currentStreak = 0;
+		powerUp = null;
 		generateFood();
 
 		gameRunning = true;
@@ -190,6 +287,7 @@
 		gameStartTime = Date.now();
 		dx = 1;
 		dy = 0;
+		nextDirection = { dx: 1, dy: 0 };
 		snakeLength = 1;
 
 		hideGameOverlay();
@@ -226,8 +324,10 @@
 		gameTime = 0;
 		currentStreak = 0;
 		snakeLength = 1;
+		powerUp = null;
 		dx = 1;
 		dy = 0;
+		nextDirection = { dx: 1, dy: 0 };
 		generateFood();
 		showGameOverlay('Snake Game', 'Press Space or click Start to begin!', 'fa-play-circle');
 		draw();
@@ -235,17 +335,32 @@
 
 	// Update game state
 	function update() {
+		// Apply buffered direction change
+		dx = nextDirection.dx;
+		dy = nextDirection.dy;
+		
 		const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
-		// Check wall collision
-		if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-			gameOver();
-			return;
+		// Handle wall collision based on game mode
+		if (gameMode === 'wrap') {
+			// Wrap around edges
+			if (head.x < 0) head.x = tileCount - 1;
+			else if (head.x >= tileCount) head.x = 0;
+			if (head.y < 0) head.y = tileCount - 1;
+			else if (head.y >= tileCount) head.y = 0;
+		} else {
+			// Border collision mode
+			if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+				playGameOverSound();
+				gameOver();
+				return;
+			}
 		}
 
 		// Check self collision
 		for (let segment of snake) {
 			if (head.x === segment.x && head.y === segment.y) {
+				playGameOverSound();
 				gameOver();
 				return;
 			}
@@ -255,13 +370,29 @@
 
 		// Check food collision
 		if (head.x === food.x && head.y === food.y) {
+			playEatSound();
 			score += 10;
 			currentStreak++;
 			totalFood++;
 			snakeLength = snake.length;
 			generateFood();
+			generatePowerUp(); // Chance to spawn power-up
 		} else {
 			snake.pop();
+		}
+
+		// Check power-up collision
+		if (powerUp && head.x === powerUp.x && head.y === powerUp.y) {
+			playPowerUpSound();
+			if (powerUp.type === 'big') {
+				// Big food: more points and grows snake by 2
+				score += 25;
+				snake.push(snake[snake.length - 1]); // Grow by extra segment
+			} else {
+				// Bonus points
+				score += 50;
+			}
+			powerUp = null;
 		}
 
 		snakeLength = snake.length;
@@ -286,6 +417,11 @@
 
 		// Draw food
 		drawFood();
+
+		// Draw power-up
+		if (powerUp) {
+			drawPowerUp();
+		}
 	}
 
 	// Draw grid
@@ -350,6 +486,51 @@
 		ctx.beginPath();
 		ctx.arc(x + gridSize / 2, y + gridSize / 2, gridSize / 2 - 2, 0, 2 * Math.PI);
 		ctx.fill();
+		ctx.shadowBlur = 0;
+	}
+
+	// Draw power-up
+	function drawPowerUp() {
+		const x = powerUp.x * gridSize;
+		const y = powerUp.y * gridSize;
+
+		if (powerUp.type === 'big') {
+			// Big food - larger circle with different color
+			ctx.shadowColor = '#f39c12';
+			ctx.shadowBlur = 20;
+			ctx.fillStyle = '#f39c12';
+			ctx.beginPath();
+			ctx.arc(x + gridSize / 2, y + gridSize / 2, gridSize / 2 + 2, 0, 2 * Math.PI);
+			ctx.fill();
+			
+			// Inner glow
+			ctx.shadowBlur = 0;
+			ctx.fillStyle = '#e67e22';
+			ctx.beginPath();
+			ctx.arc(x + gridSize / 2, y + gridSize / 2, gridSize / 3, 0, 2 * Math.PI);
+			ctx.fill();
+		} else {
+			// Bonus points - star shape
+			ctx.shadowColor = '#9b59b6';
+			ctx.shadowBlur = 20;
+			ctx.fillStyle = '#9b59b6';
+			
+			const centerX = x + gridSize / 2;
+			const centerY = y + gridSize / 2;
+			const radius = gridSize / 3;
+			
+			// Draw star
+			ctx.beginPath();
+			for (let i = 0; i < 5; i++) {
+				const angle = (i * 4 * Math.PI) / 5;
+				const x1 = centerX + Math.cos(angle) * radius;
+				const y1 = centerY + Math.sin(angle) * radius;
+				if (i === 0) ctx.moveTo(x1, y1);
+				else ctx.lineTo(x1, y1);
+			}
+			ctx.closePath();
+			ctx.fill();
+		}
 		ctx.shadowBlur = 0;
 	}
 
@@ -534,6 +715,16 @@
 		}
 	}
 
+	// Toggle game mode
+	function toggleGameMode() {
+		gameMode = gameMode === 'border' ? 'wrap' : 'border';
+	}
+
+	// Toggle sound
+	function toggleSound() {
+		soundEnabled = !soundEnabled;
+	}
+
 	// Handle keyboard input
 	function handleKeyPress(event) {
 		// Don't interfere with text input when name input modal is open
@@ -542,7 +733,7 @@
 		}
 
 		// Prevent default scrolling for game keys (but not when typing in input)
-		if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyF'].includes(event.code) && !showNameInput) {
+		if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyF', 'KeyM'].includes(event.code) && !showNameInput) {
 			event.preventDefault();
 		}
 
@@ -560,29 +751,46 @@
 			return;
 		}
 
+		if (event.code === 'KeyM' && !showNameInput) {
+			toggleGameMode();
+			return;
+		}
+
 		// Don't process game controls when name input is open
 		if (showNameInput) return;
 
 		if (!gameRunning || gamePaused) return;
 
-		// Movement controls
+		// Movement controls with input buffering to prevent turning into self
 		switch (event.code) {
 			case 'ArrowUp':
-			case 'KeyW':
-				if (dy !== 1) { dx = 0; dy = -1; }
-				break;
-			case 'ArrowDown':
-			case 'KeyS':
-				if (dy !== -1) { dx = 0; dy = 1; }
-				break;
-			case 'ArrowLeft':
-			case 'KeyA':
-				if (dx !== 1) { dx = -1; dy = 0; }
-				break;
-			case 'ArrowRight':
-			case 'KeyD':
-				if (dx !== -1) { dx = 1; dy = 0; }
-				break;
+				case 'KeyW':
+					// Only allow if not currently moving down (opposite direction)
+					if (dy !== 1) {
+						nextDirection = { dx: 0, dy: -1 };
+					}
+					break;
+				case 'ArrowDown':
+				case 'KeyS':
+					// Only allow if not currently moving up (opposite direction)
+					if (dy !== -1) {
+						nextDirection = { dx: 0, dy: 1 };
+					}
+					break;
+				case 'ArrowLeft':
+				case 'KeyA':
+					// Only allow if not currently moving right (opposite direction)
+					if (dx !== 1) {
+						nextDirection = { dx: -1, dy: 0 };
+					}
+					break;
+				case 'ArrowRight':
+				case 'KeyD':
+					// Only allow if not currently moving left (opposite direction)
+					if (dx !== -1) {
+						nextDirection = { dx: 1, dy: 0 };
+					}
+					break;
 		}
 	}
 
@@ -646,6 +854,7 @@
 			<i class="fas fa-gamepad"></i>
 			<h1>Snake Game</h1>
 			<span class="credits">by <a href="https://github.com/cosmic-fi" target="_blank">Cosmic-fi</a></span>
+			<span class="version">v {packageJson.version}</span>
 		</div>
 		<div class="header-stats">
 			<div class="stat-item">
@@ -659,6 +868,15 @@
 			<div class="stat-item">
 				<i class="fas fa-star"></i>
 				<span>Score: {score}</span>
+			</div>
+			<div class="header-action-buttons">
+				<button class="btn btn-success" on:click={toggleLeaderboard}>
+					<i class="fas fa-trophy"></i> Leaderboard
+				</button>
+				<span></span>
+				<button class="btn btn-outline mode-btn" on:click={toggleGameMode}>
+					<i class="fas fa-{gameMode === 'border' ? 'square' : 'sync-alt'}"></i> Mode: {gameMode === 'border' ? 'Border' : 'Wrap'}
+				</button>
 			</div>
 		</div>
 	</header>
@@ -758,7 +976,13 @@
 						<strong>Fullscreen:</strong> F key
 					</div>
 					<div class="tip-item">
-						<strong>Quick Start:</strong> Click the canvas
+						<strong>Mode Toggle:</strong> M key
+					</div>
+					<div class="tip-item">
+						<strong>Power-ups:</strong> 🟠 Big Food (+25), ⭐ Bonus (+50)
+					</div>
+					<div class="tip-item">
+						<strong>Modes:</strong> Border (walls kill) vs Wrap (teleport)
 					</div>
 				</div>
 			</div>
@@ -819,30 +1043,45 @@
 
 			<!-- Game Controls -->
 			<div class="game-controls">
-				<button 
-					class="btn btn-primary" 
-					disabled={gameRunning}
-					on:click={startGame}
-				>
-					<i class="fas fa-play"></i> Start
-				</button>
-				<button 
-					class="btn btn-warning" 
-					disabled={!gameRunning}
-					on:click={togglePause}
-				>
-					<i class="fas {gamePaused ? 'fa-play' : 'fa-pause'}"></i> 
-					{gamePaused ? 'Resume' : 'Pause'}
-				</button>
-				<button class="btn btn-danger" on:click={resetGame}>
-					<i class="fas fa-redo"></i> Reset
-				</button>
-				<button class="btn btn-info" on:click={toggleFullscreen}>
-					<i class="fas fa-expand"></i> Fullscreen
-				</button>
-				<button class="btn btn-success" on:click={toggleLeaderboard}>
-					<i class="fas fa-trophy"></i> Leaderboard
-				</button>
+				<div class="control-row">
+					<button 
+						class="btn btn-primary" 
+						disabled={gameRunning}
+						on:click={startGame}
+					>
+						<i class="fas fa-play"></i> Start
+					</button>
+					<button 
+						class="btn btn-warning" 
+						disabled={!gameRunning}
+						on:click={togglePause}
+					>
+						<i class="fas {gamePaused ? 'fa-play' : 'fa-pause'}"></i> 
+						{gamePaused ? 'Resume' : 'Pause'}
+					</button>
+					<button class="btn btn-danger" on:click={resetGame}>
+						<i class="fas fa-redo"></i> Reset
+					</button>
+				</div>
+				<div class="control-row">
+					<button class="btn btn-info" on:click={toggleFullscreen}>
+						<i class="fas fa-expand"></i> Fullscreen
+					</button>
+					<!-- <button class="btn btn-success" on:click={toggleLeaderboard}>
+						<i class="fas fa-trophy"></i> Leaderboard
+					</button> -->
+					<button class="btn {soundEnabled ? 'btn-secondary' : 'btn-muted'}" on:click={toggleSound}>
+						<i class="fas {soundEnabled ? 'fa-volume-up' : 'fa-volume-mute'}"></i> Sound
+					</button>
+				</div>
+				<div class="control-hints">
+					<div class="hint"><kbd>Space</kbd> Start/Pause</div>
+					<div class="hint"><kbd>F</kbd> Fullscreen</div>
+					<div class="hint"><kbd>M</kbd> Mode Toggle</div>
+					<div class="hint">🟡 Normal Food (+10)</div>
+					<div class="hint">🟠 Big Food (+25)</div>
+					<div class="hint">⭐ Bonus (+50)</div>
+				</div>
 			</div>
 		</section>
 	</div>
@@ -972,6 +1211,7 @@
 <style>
 	.app-container {
 		min-height: 100vh;
+		width: 100%;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		color: #ffffff;
 		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -990,6 +1230,18 @@
 		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 	}
 
+	.header-action-buttons{
+		display: flex;
+		flex-direction: row;
+		column-gap: 5px;
+		padding-left: 15px;
+		justify-content: center;
+		align-items: center;
+		border-left: 2px solid rgba(255, 255, 255, 0.2);
+	}
+	.mode-btn{
+		white-space: nowrap;
+	}
 	.credits{
 		color: rgb(209, 209, 209);
 
@@ -1001,8 +1253,16 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		position: relative;
 	}
 
+	.version{
+		position: absolute;
+		top: 30px;
+		font-size: 13px;
+		right: 100px;
+		color: #dddddd;
+	}
 	.logo h1 {
 		margin: 0;
 		font-size: 1.8rem;
@@ -1034,21 +1294,23 @@
 	.main-content {
 		display: grid;
 		grid-template-columns: 300px 1fr;
-		gap: 2rem;
-		padding: 2rem;
-		max-width: 1400px;
-		flex-grow: 1 !important;
-		margin: 0 auto;
+		gap: .5rem;
+		padding-left: 1em;
+		height: calc(100vh - 80px);
+		flex-wrap: 1;
 	}
 
 	.scoreboard {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
-		height: 500px;
+		/* gap: 1.5rem; */
+		height: calc(100vh - 100px - 2em);
 		overflow: hidden;
 		overflow-y: auto;
-		padding-right: .5em;
+		margin: .5em .5em 0 .5em;
+		padding: 1em;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 10px;
 	}
 
 	.score-section {
@@ -1057,6 +1319,7 @@
 		padding: 1.5rem;
 		backdrop-filter: blur(10px);
 		border: 1px solid rgba(255, 255, 255, 0.2);
+		margin-bottom: .5em;
 	}
 
 	.score-section h3 {
@@ -1173,30 +1436,44 @@
 
 	.game-section {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row-reverse;
 		gap: 1.5rem;
 		align-items: center;
+		justify-content: center;
+		padding-right: 1em;
 	}
 
 	.game-container {
 		position: relative;
 		border-radius: 15px;
 		width: 100%;
+		height: 90%;
 		overflow: hidden;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 		border: 2px solid rgba(255, 255, 255, 0.2);
-		background-color: #1a1a2e;
+		background-color: #2c2c49;
+		background-image: url(./pngegg.png);
+		background-size: 200%;
+		background-repeat: repeat;
+		background-blend-mode:hard-light;
 	}
 
 	.game-canvas {
 		display: block;
 		background: #1a1a2e;
-		margin: 0 auto;
+		/* margin: auto auto; */
 		cursor: pointer;
 		outline: none;
+		max-width: 100%;
+		max-height: 100%;
 		width: 100%;
-		height: 100%;
-		object-fit: contain;
+		height: auto;
+		object-fit: cover;
+		border-radius: 10px;
+		border: 2px solid rgba(255, 255, 255, 0.2);
 	}
 
 	/* Fullscreen canvas scaling */
@@ -1213,6 +1490,10 @@
 		align-items: center;
 		justify-content: center;
 		background: #0f0f23;
+		background-image: url(./pngegg.png);
+		background-size: 200%;
+		background-repeat: repeat;
+		background-blend-mode:hard-light;
 	}
 
 	.game-overlay {
@@ -1265,13 +1546,21 @@
 	.game-controls {
 		display: flex;
 		gap: 1rem;
-		flex-wrap: wrap;
-		justify-content: center;
+		width: 300px;
+		/* flex-wrap: wrap; */
+		flex-direction: column;
+		/* justify-content: center; */
+		/* background-color: orangered; */
+		padding: 1em;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 10px;
+
 	}
 
 	.btn {
 		padding: 0.8rem 1.5rem;
 		border: none;
+		width: 80%;
 		border-radius: 8px;
 		font-size: 1rem;
 		font-weight: 600;
@@ -1333,6 +1622,59 @@
 		border: 2px solid rgba(255, 255, 255, 0.2);
 	}
 
+	.btn-muted {
+		background: linear-gradient(135deg, #95a5a6 0%, #34495e 100%);
+		color: rgba(255, 255, 255, 0.7);
+		border: 2px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.btn-outline {
+		background: transparent;
+		color: white;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.btn-outline:hover {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	/* Control Layout */
+	.control-row {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
+	.control-hints {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.hint {
+		font-size: 0.8rem;
+		color: rgba(255, 255, 255, 0.7);
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.hint kbd {
+		background: rgba(255, 255, 255, 0.2);
+		padding: 0.2rem 0.4rem;
+		border-radius: 4px;
+		font-size: 0.7rem;
+		font-weight: bold;
+		color: #ffd700;
+	}
+
+
+
 	.game-tips {
 		background: rgba(255, 255, 255, 0.1);
 		border-radius: 15px;
@@ -1365,7 +1707,7 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background: rgba(0, 0, 0, 0.8);
+		background: rgba(0, 0, 0, 0.349);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1420,14 +1762,16 @@
 		color: rgba(255, 255, 255, 0.8);
 		font-size: 1.5rem;
 		cursor: pointer;
-		padding: 0.5rem;
-		border-radius: 50%;
+		/* padding: 0.5rem; */
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 100px;
 		transition: all 0.3s ease;
 	}
 
 	.modal-close:hover {
 		color: white;
-		background: rgba(255, 255, 255, 0.1);
 	}
 
 	.modal-body {
@@ -1452,7 +1796,7 @@
 	}
 
 	.name-input {
-		/* width: 100%; */
+		min-width: 70%;
 		padding: 1rem;
 		border: 2px solid rgba(255, 255, 255, 0.3);
 		border-radius: 8px;
@@ -1460,6 +1804,7 @@
 		color: white;
 		font-size: 1rem;
 		outline: none;
+		text-align: center;
 		transition: all 0.3s ease;
 	}
 
