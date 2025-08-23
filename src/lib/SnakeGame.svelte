@@ -797,33 +797,49 @@
 		// Movement controls with input buffering to prevent turning into self
 		switch (event.code) {
 			case 'ArrowUp':
-				case 'KeyW':
-					// Only allow if not currently moving down (opposite direction)
-					if (dy !== 1) {
-						nextDirection = { dx: 0, dy: -1 };
+			case 'KeyW':
+				// Only allow if not currently moving down (opposite direction)
+				if (dy !== 1) {
+					// Only play sound if direction is actually changing
+					if (dx !== 0 || dy !== -1) {
+						playMoveSound();
 					}
-					break;
-				case 'ArrowDown':
-				case 'KeyS':
-					// Only allow if not currently moving up (opposite direction)
-					if (dy !== -1) {
-						nextDirection = { dx: 0, dy: 1 };
+					nextDirection = { dx: 0, dy: -1 };
+				}
+				break;
+			case 'ArrowDown':
+			case 'KeyS':
+				// Only allow if not currently moving up (opposite direction)
+				if (dy !== -1) {
+					// Only play sound if direction is actually changing
+					if (dx !== 0 || dy !== 1) {
+						playMoveSound();
 					}
-					break;
-				case 'ArrowLeft':
-				case 'KeyA':
-					// Only allow if not currently moving right (opposite direction)
-					if (dx !== 1) {
-						nextDirection = { dx: -1, dy: 0 };
+					nextDirection = { dx: 0, dy: 1 };
+				}
+				break;
+			case 'ArrowLeft':
+			case 'KeyA':
+				// Only allow if not currently moving right (opposite direction)
+				if (dx !== 1) {
+					// Only play sound if direction is actually changing
+					if (dx !== -1 || dy !== 0) {
+						playMoveSound();
 					}
-					break;
-				case 'ArrowRight':
-				case 'KeyD':
-					// Only allow if not currently moving left (opposite direction)
-					if (dx !== -1) {
-						nextDirection = { dx: 1, dy: 0 };
+					nextDirection = { dx: -1, dy: 0 };
+				}
+				break;
+			case 'ArrowRight':
+			case 'KeyD':
+				// Only allow if not currently moving left (opposite direction)
+				if (dx !== -1) {
+					// Only play sound if direction is actually changing
+					if (dx !== 1 || dy !== 0) {
+						playMoveSound();
 					}
-					break;
+					nextDirection = { dx: 1, dy: 0 };
+				}
+				break;
 		}
 	}
 
