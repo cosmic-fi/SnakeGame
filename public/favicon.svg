@@ -1,30 +1,29 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="64" fill="url(#gradient)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    <!-- Gradient for the diamond -->
+    <linearGradient id="diamondGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8E53;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E55A2B;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- Snake body -->
-  <rect x="80" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="120" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="160" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="200" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="240" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="280" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="320" y="216" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="320" y="256" width="40" height="40" rx="6" fill="#4ade80"/>
-  <rect x="320" y="296" width="40" height="40" rx="6" fill="#4ade80"/>
+  <!-- Background -->
+  <rect width="32" height="32" fill="#1a1a2e" rx="4"/>
   
-  <!-- Snake head -->
-  <rect x="360" y="296" width="40" height="40" rx="6" fill="#22c55e"/>
+  <!-- Main diamond shape -->
+  <path d="M 16 4 L 26 16 L 16 28 L 6 16 Z" 
+        fill="url(#diamondGrad)" 
+        stroke="#FF8E53" 
+        stroke-width="1"/>
   
-  <!-- Eyes -->
-  <circle cx="370" cy="306" r="4" fill="#1f2937"/>
-  <circle cx="390" cy="306" r="4" fill="#1f2937"/>
+  <!-- Inner highlight -->
+  <path d="M 16 8 L 22 16 L 16 24 L 10 16 Z" 
+        fill="#FFB366" 
+        opacity="0.6"/>
   
-  <!-- Food -->
-  <circle cx="180" cy="140" r="16" fill="#ef4444"/>
+  <!-- Lightning bolt -->
+  <path d="M 14 10 L 18 10 L 16 15 L 19 15 L 12 22 L 15 17 L 12 17 L 14 12 Z" 
+        fill="#FFFFFF" 
+        opacity="0.9"/>
 </svg>

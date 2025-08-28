@@ -18,8 +18,7 @@ export const GAME_CONFIG = {
   // Minimum score to qualify for leaderboard submission
   minScoreThreshold: 1,
   
-  // Maximum score validation (to prevent impossible scores)
-  maxScoreThreshold: 10000,
+  // Maximum score validation removed - no score limit
   
   // Player name validation
   playerName: {

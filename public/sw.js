@@ -1,9 +1,11 @@
-const CACHE_NAME = 'snake-game-v1';
+const CACHE_NAME = 'snake-game-v1.3';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.png'
+  '/favicon.svg',
+  '/icon-192.svg',
+  '/icon-512.svg',
 ];
 
 // Install event - cache resources

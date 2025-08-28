@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+supabase_migration_add_game_mode.sql
+refactoring-plan.md
+fix_rls_policy.sql

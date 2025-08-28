@@ -1,11 +1,31 @@
+/* Import zoom-adaptive styles */
+@import './lib/styles/zoom-adaptive.css';
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Orbitron', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Theme variables - will be updated by theme system */
+  --primary-color: #F7A5A5;
+  --secondary-color: #FFDBB6;
+  --accent-color: #F7A5A5;
+  --background-color: #FFF2EF;
+  --surface-color: #FFFFFF;
+  --text-color: #5D688A;
+  --text-secondary: #8A9BB8;
+  --border-color: #E8D5D5;
+  --button-bg: #F7A5A5;
+  --button-text: #FFFFFF;
+  --button-hover: #F58B8B;
+  --success-color: #90EE90;
+  --warning-color: #FFD700;
+  --error-color: #FF6B6B;
+  --info-color: #87CEEB;
+
+  color-scheme: light;
+  color: var(--text-color);
+  background-color: var(--background-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -45,18 +65,20 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
+  color: var(--button-text);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s ease;
   outline: none !important;
 }
 button:hover {
-  border-color: #646cff;
+  background-color: var(--button-hover);
+  border-color: var(--accent-color);
 }
 button:focus,
 button:focus-visible {

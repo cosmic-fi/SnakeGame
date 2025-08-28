@@ -1,0 +1,272 @@
+/**
+ * Zoom-Adaptive Font Styles
+ * Works with ZoomAdapter.js to provide responsive font scaling based on browser zoom
+ */
+
+/* Base zoom-adaptive font sizes using CSS custom properties */
+:root {
+  /* Default values (will be overridden by ZoomAdapter) */
+  --zoom-level: 1;
+  --zoom-font-scale: 1;
+  --zoom-adaptive-base: 1rem;
+  --zoom-adaptive-small: 0.875rem;
+  --zoom-adaptive-medium: 1.125rem;
+  --zoom-adaptive-large: 1.25rem;
+  --zoom-adaptive-xl: 1.5rem;
+  --zoom-adaptive-2xl: 2rem;
+  --zoom-adaptive-3xl: 3rem;
+}
+
+/* Zoom-adaptive font size utility classes */
+.font-zoom-xs {
+  font-size: calc(var(--zoom-adaptive-small) * 0.75);
+}
+
+.font-zoom-sm {
+  font-size: var(--zoom-adaptive-small);
+}
+
+.font-zoom-base {
+  font-size: var(--zoom-adaptive-base);
+}
+
+.font-zoom-md {
+  font-size: var(--zoom-adaptive-medium);
+}
+
+.font-zoom-lg {
+  font-size: var(--zoom-adaptive-large);
+}
+
+.font-zoom-xl {
+  font-size: var(--zoom-adaptive-xl);
+}
+
+.font-zoom-2xl {
+  font-size: var(--zoom-adaptive-2xl);
+}
+
+.font-zoom-3xl {
+  font-size: var(--zoom-adaptive-3xl);
+}
+
+/* Enhanced clamp functions that work with zoom */
+.font-zoom-clamp-sm {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.8),
+    calc(2vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-base) * 1.1)
+  );
+}
+
+.font-zoom-clamp-md {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-base) * 0.9),
+    calc(2.5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-large) * 1.1)
+  );
+}
+
+.font-zoom-clamp-lg {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-medium) * 0.9),
+    calc(3vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-xl) * 1.1)
+  );
+}
+
+.font-zoom-clamp-xl {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-large) * 0.9),
+    calc(4vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-2xl) * 1.1)
+  );
+}
+
+.font-zoom-clamp-2xl {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-xl) * 0.9),
+    calc(5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-3xl) * 1.1)
+  );
+}
+
+/* Zoom-specific adjustments */
+.zoom-out {
+  /* When zoomed out, increase font sizes for better readability */
+  --zoom-text-boost: 1.2;
+}
+
+.zoom-out .font-zoom-boost {
+  font-size: calc(var(--zoom-adaptive-base) * var(--zoom-text-boost));
+}
+
+.zoom-in {
+  /* When zoomed in, slightly reduce to prevent overflow */
+  --zoom-text-reduce: 0.95;
+}
+
+.zoom-in .font-zoom-compact {
+  font-size: calc(var(--zoom-adaptive-base) * var(--zoom-text-reduce));
+}
+
+/* Responsive zoom-adaptive mixins for common elements */
+.zoom-adaptive-heading-1 {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-2xl) * 0.8),
+    calc(5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-3xl) * 1.2)
+  );
+  line-height: 1.1;
+}
+
+.zoom-adaptive-heading-2 {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-xl) * 0.9),
+    calc(4vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-2xl) * 1.1)
+  );
+  line-height: 1.2;
+}
+
+.zoom-adaptive-heading-3 {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-large) * 0.9),
+    calc(3vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-xl) * 1.1)
+  );
+  line-height: 1.3;
+}
+
+.zoom-adaptive-body {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.9),
+    calc(2.5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-medium) * 1.1)
+  );
+  line-height: 1.5;
+}
+
+.zoom-adaptive-small {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.8),
+    calc(2vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-base) * 1.0)
+  );
+  line-height: 1.4;
+}
+
+.zoom-adaptive-button {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.9),
+    calc(2.5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-medium) * 1.1)
+  );
+  padding: calc(0.6em * var(--zoom-font-scale)) calc(1.2em * var(--zoom-font-scale));
+}
+
+/* Game-specific zoom adaptations */
+.game-title {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-2xl) * 0.8),
+    calc(5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-3xl) * 1.2)
+  );
+  font-weight: 900;
+  letter-spacing: calc(2px * var(--zoom-font-scale));
+}
+
+.game-menu-button {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.9),
+    calc(2.5vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-medium) * 1.1)
+  );
+  padding: calc(15px * var(--zoom-font-scale)) calc(25px * var(--zoom-font-scale));
+}
+
+.game-score {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-base) * 0.9),
+    calc(3vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-large) * 1.1)
+  );
+  font-weight: 700;
+}
+
+.game-ui-text {
+  font-size: clamp(
+    calc(var(--zoom-adaptive-small) * 0.8),
+    calc(2vw * var(--zoom-font-scale)),
+    calc(var(--zoom-adaptive-base) * 1.0)
+  );
+}
+
+/* Zoom level indicators (for debugging) */
+.zoom-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.zoom-indicator::before {
+  content: 'Zoom: ' attr(data-zoom) '%';
+}
+
+/* Media queries for extreme zoom levels */
+@media screen and (max-width: 480px) {
+  .zoom-out .font-zoom-boost {
+    --zoom-text-boost: 1.4;
+  }
+}
+
+@media screen and (min-width: 1920px) {
+  .zoom-in .font-zoom-compact {
+    --zoom-text-reduce: 0.9;
+  }
+}
+
+/* Accessibility: Ensure minimum font sizes */
+@media (prefers-reduced-motion: no-preference) {
+  .zoom-adaptive-heading-1,
+  .zoom-adaptive-heading-2,
+  .zoom-adaptive-heading-3,
+  .zoom-adaptive-body,
+  .zoom-adaptive-small,
+  .zoom-adaptive-button {
+    transition: font-size 0.2s ease;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .zoom-adaptive-heading-1,
+  .zoom-adaptive-heading-2,
+  .zoom-adaptive-heading-3 {
+    font-weight: 900;
+  }
+  
+  .zoom-adaptive-body,
+  .zoom-adaptive-small {
+    font-weight: 600;
+  }
+}
+
+/* Print styles */
+@media print {
+  .zoom-adaptive-heading-1,
+  .zoom-adaptive-heading-2,
+  .zoom-adaptive-heading-3,
+  .zoom-adaptive-body,
+  .zoom-adaptive-small {
+    font-size: revert !important;
+  }
+}

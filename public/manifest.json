@@ -1,11 +1,11 @@
 {
-  "name": "Snake Game",
+  "name": "Coscmic's Snake Game",
   "short_name": "Snake",
   "description": "A modern Snake game with online leaderboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#667eea",
+  "background_color": "#F7A5A5",
+  "theme_color": "#5D688A",
   "orientation": "any",
   "scope": "/",
   "icons": [
