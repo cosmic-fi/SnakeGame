@@ -1,7 +1,6 @@
-![Snake Game Screenshot](https://i.ibb.co/vCRv3Dxx/Capture.png)
+<img width="1352" height="631" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/34173aee-7ad7-40c8-854b-72878fbde5d4" />
 
-
-### [<a href="https://snakegame.cosmicfi.online/" style="background-color: #646cff;color:aliceblue;cursor:pointer;padding: 10px;border-radius: 10px">[ Play Now ]</a> ]
+### <a href="https://snakegame.cosmicfi.online/" style="background-color: #646cff;color:aliceblue;cursor:pointer;padding: 10px;border-radius: 10px">[ Play Now ]</a>
 
 ## Live Demo
 
@@ -16,11 +15,9 @@ A modern, responsive Snake game built with Svelte and Vite, featuring a shared o
 - **Classic Snake Gameplay**: Smooth controls with WASD or arrow keys
 - **Modern UI**: Dark theme with beautiful gradients and animations
 - **Online Leaderboard**: Shared global leaderboard with real-time updates
-- **Responsive Design**: Works perfectly on desktop and mobile devices
+- **Responsive Design**: Works perfectly on desktop 
 - **Game Statistics**: Track your best scores, games played, and average score
 - **Offline Support**: Fallback to local storage when offline
-- **Custom Scrollbars**: Sleek transparent white scrollbars
-- **Anti-Cheat Protection**: Server-side validation and score limits
 
 ## Quick Start
 
